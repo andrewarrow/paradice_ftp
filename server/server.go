@@ -9,8 +9,32 @@ import (
 	"sync"
 )
 
+// CommandMap maps FTP commands to Parasise handlers.
 var CommandMap map[string]func(*Paradise)
 
+func init() {
+	CommandMap = make(map[string]func(*Paradise))
+
+	CommandMap["USER"] = (*Paradise).HandleUser
+	CommandMap["PASS"] = (*Paradise).HandlePass
+	CommandMap["STOR"] = (*Paradise).HandleStore
+	CommandMap["APPE"] = (*Paradise).HandleStore
+	CommandMap["STAT"] = (*Paradise).HandleStat
+	CommandMap["SYST"] = (*Paradise).HandleSyst
+	CommandMap["PWD"] = (*Paradise).HandlePwd
+	CommandMap["TYPE"] = (*Paradise).HandleType
+	CommandMap["PASV"] = (*Paradise).HandlePassive
+	CommandMap["EPSV"] = (*Paradise).HandlePassive
+	CommandMap["NLST"] = (*Paradise).HandleList
+	CommandMap["LIST"] = (*Paradise).HandleList
+	CommandMap["QUIT"] = (*Paradise).HandleQuit
+	CommandMap["CWD"] = (*Paradise).HandleCwd
+	CommandMap["SIZE"] = (*Paradise).HandleSize
+	CommandMap["RETR"] = (*Paradise).HandleRetr
+}
+
+// Paradise encapsulates an FTP connection and
+// associated streams and synchronization structures.
 type Paradise struct {
 	writer        *bufio.Writer
 	reader        *bufio.Reader
@@ -27,6 +51,7 @@ type Paradise struct {
 	buffer        []byte
 }
 
+// NewParadise is the factory function for Paradise values.
 func NewParadise(connection net.Conn) *Paradise {
 	p := Paradise{}
 
@@ -38,6 +63,7 @@ func NewParadise(connection net.Conn) *Paradise {
 	return &p
 }
 
+// HandleCommmands handles FTP commands.
 func (self *Paradise) HandleCommands() {
 	fmt.Println("Got client on: ", self.ip)
 	self.writeMessage(220, "Welcome to Paradise")
