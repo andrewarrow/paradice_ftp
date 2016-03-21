@@ -3,29 +3,30 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"github.com/jehiah/go-strftime"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jehiah/go-strftime"
 )
 
-func (self *Paradise) HandleList() {
-	fmt.Println(self.ip, self.command, self.param)
+func (p *Paradise) HandleList() {
+	fmt.Println(p.ip, p.command, p.param)
 
-	self.writeMessage(150, "Opening ASCII mode data connection for file list")
+	p.writeMessage(150, "Opening ASCII mode data connection for file list")
 
-	bytes, err := self.dirList()
+	bytes, err := p.dirList()
 	if err != nil {
-		self.writeMessage(550, err.Error())
+		p.writeMessage(550, err.Error())
 	} else {
-		self.waiter.Wait()
-		self.passiveConn.Write(bytes)
+		p.waiter.Wait()
+		p.passiveConn.Write(bytes)
 		message := "Closing data connection, sent bytes"
-		self.writeMessage(226, message)
+		p.writeMessage(226, message)
 	}
 }
 
-func (self *Paradise) dirList() ([]byte, error) {
+func (p *Paradise) dirList() ([]byte, error) {
 	var buf bytes.Buffer
 
 	files := []int{1, 2, 3, 4, 5} // change to real list of files
