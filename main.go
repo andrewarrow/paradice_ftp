@@ -1,23 +1,31 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
-	"paradise/server"
+
+	"github.com/andrewarrow/paradise_ftp/server"
 )
 
-func main() {
-	server.CommandMap = server.MakeCommandMap()
+var port int
 
-	url := fmt.Sprintf("localhost:%d", 2121) // change to 21 in production
+func init() {
+	flag.IntVar(&port, "port", 2121, "port to listen on")
+}
+
+func main() {
+	flag.Parse()
+
+	url := fmt.Sprintf("localhost:%d", port) // change to 21 in production
 	var listener net.Listener
 	listener, err := net.Listen("tcp", url)
 
 	if err != nil {
-		fmt.Println("cannot listen on: ", url)
+		fmt.Println("cannot listen on:", url)
 		return
 	}
-	fmt.Println("listening on: ", url)
+	fmt.Println("listening on:", url)
 
 	for {
 		connection, err := listener.Accept()
