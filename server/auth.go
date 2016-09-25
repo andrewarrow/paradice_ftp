@@ -25,6 +25,7 @@ func (p *Paradise) HandlePass() {
 
 func (p *Paradise) HandleAuth() {
 	fmt.Println(p.param)
+	p.writeMessage(234, "AUTH command ok. Expecting TLS Negotiation.")
 
 	// openssl req -new -nodes -x509 -out server.pem -keyout server.key -days 3650 -subj "/C=DE/ST=NRW/L=Earth/O=Random Company/OU=IT/CN=www.random.com/emailAddress=foo@foo.com"
 
@@ -35,10 +36,12 @@ func (p *Paradise) HandleAuth() {
 	}
 	config := tls.Config{
 		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.VerifyClientCertIfGiven,
-		ServerName:   "localhost"}
+		//ClientAuth:         tls.VerifyClientCertIfGiven,
+		ClientAuth:         tls.NoClientCert,
+		InsecureSkipVerify: true,
+		ServerName:         "localhost"}
 	tlsConn := tls.Server(p.theConnection, &config)
-	fmt.Println("handshake1")
+	fmt.Println("handshake1 ", tlsConn.ConnectionState())
 	err := tlsConn.Handshake()
 	if err == nil {
 		p.theConnection = tlsConn
@@ -46,9 +49,7 @@ func (p *Paradise) HandleAuth() {
 		p.reader = bufio.NewReader(tlsConn)
 		p.tls = true
 	}
-	fmt.Println("handshake2")
-
-	p.writeMessage(234, "AUTH command ok. Expecting TLS Negotiation.")
+	fmt.Println("handshake2 ", tlsConn.ConnectionState())
 
 }
 

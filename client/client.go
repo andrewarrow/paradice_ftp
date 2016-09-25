@@ -7,6 +7,7 @@ import "bufio"
 import "strings"
 import "math/rand"
 import "time"
+import "crypto/tls"
 
 type Client struct {
 	reader     *textproto.Reader
@@ -61,11 +62,26 @@ func (c *Client) Connect() {
 	c.reader = textproto.NewReader(bufio.NewReader(c.conn))
 	c.writer = textproto.NewWriter(bufio.NewWriter(c.conn))
 
-	c.read(false)
+	c.send("AUTH TLS")
+	c.read(true)
+	c.read(true)
+
+	config := tls.Config{
+		ClientAuth:         tls.NoClientCert,
+		InsecureSkipVerify: true,
+	}
+	t := tls.Client(c.conn, &config)
+	//err = t.Handshake()
+	//fmt.Println("|", err)
+	c.conn = t
+
+	c.reader = textproto.NewReader(bufio.NewReader(c.conn))
+	c.writer = textproto.NewWriter(bufio.NewWriter(c.conn))
+
 	c.send("USER bad")
-	c.read(false)
+	c.read(true)
 	c.send("PASS security")
-	c.read(false)
+	c.read(true)
 }
 
 func (c *Client) List() {
@@ -74,6 +90,7 @@ func (c *Client) List() {
 	c.read(false)
 	for {
 		line, err := c.passReader.ReadString('\n')
+		fmt.Println(line)
 		if line == "\r\n" {
 			break
 		}
@@ -115,12 +132,21 @@ func fakeFile(size int64) []byte {
 }
 
 func (c *Client) openPassive() {
+	fmt.Println("1111")
 	c.send("EPSV")
 	c.read(false)
-	//fmt.Println("PORT ", c.lastMsg)
+	fmt.Println("111122")
 
+	config := tls.Config{
+		ClientAuth:         tls.NoClientCert,
+		InsecureSkipVerify: true,
+	}
+
+	var err error
+	fmt.Println("111333")
 	port := strings.TrimRight(c.lastMsg, "(|)")[35:40]
-	c.passive, _ = net.DialTimeout("tcp", "127.0.0.1:"+port, 10000000)
+	c.passive, err = tls.Dial("tcp", "127.0.0.1:"+port, &config)
+	fmt.Println("111444 ", err)
 	c.passReader = bufio.NewReader(c.passive)
 	c.passWriter = bufio.NewWriter(c.passive)
 }

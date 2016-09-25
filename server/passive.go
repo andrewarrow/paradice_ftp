@@ -57,15 +57,21 @@ func getThatPassiveConnection(passiveListen *net.TCPListener, p *Passive) {
 	cert, _ := tls.LoadX509KeyPair("server.pem", "server.key")
 	config := tls.Config{
 		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.VerifyClientCertIfGiven,
-		ServerName:   "localhost"}
+		//ClientAuth:         tls.VerifyClientCertIfGiven,
+		ClientAuth:         tls.NoClientCert,
+		InsecureSkipVerify: true,
+		ServerName:         "localhost"}
 
+	fmt.Println("1")
 	if p.tls {
+		fmt.Println("12")
 		l := tls.NewListener(passiveListen, &config)
 		p.connection, perr = l.Accept()
 	} else {
+		fmt.Println("123")
 		p.connection, perr = passiveListen.AcceptTCP()
 	}
+	fmt.Println("1234")
 
 	if perr != nil {
 		p.listenFailedAt = time.Now().Unix()

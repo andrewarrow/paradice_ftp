@@ -4,16 +4,21 @@ import "testing"
 import "os"
 
 import "os/exec"
-import "paradise/client"
+import "github.com/andrewarrow/paradise_ftp/client"
 import "math/rand"
 import "sync"
 import "time"
+import "fmt"
 
 var file *os.File
 var fileBytes []byte
 
 func TestMain(m *testing.M) {
-	os.Exit(m.Run())
+	fmt.Println("111")
+	c := client.NewClient(1)
+	c.Connect()
+	c.List()
+	//os.Exit(m.Run())
 }
 
 func TestSimple(t *testing.T) {
