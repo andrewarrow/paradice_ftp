@@ -6,6 +6,7 @@ import "net"
 import "strconv"
 import "strings"
 import "time"
+import "crypto/tls"
 
 func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	c := make(chan struct{})
@@ -28,7 +29,7 @@ type Passive struct {
 	closeFailedAt   int64
 	listenAt        int64
 	connectedAt     int64
-	connection      *net.TCPConn
+	connection      net.Conn
 	command         string
 	param           string
 	cid             string
@@ -45,9 +46,9 @@ func (p *Paradise) closePassive(passive *Passive) {
 	}
 }
 
-func getThatPassiveConnection(passiveListen *net.TCPListener, p *Passive) {
+func getThatPassiveConnection(passiveListen net.Listener, p *Passive) {
 	var perr error
-	p.connection, perr = passiveListen.AcceptTCP()
+	p.connection, perr = passiveListen.Accept()
 	if perr != nil {
 		p.listenFailedAt = time.Now().Unix()
 		p.waiter.Done()
@@ -59,7 +60,7 @@ func getThatPassiveConnection(passiveListen *net.TCPListener, p *Passive) {
 	p.waiter.Done()
 }
 
-func NewPassive(passiveListen *net.TCPListener, cid string, now int64) *Passive {
+func NewPassive(passiveListen net.Listener, cid string, now int64) *Passive {
 	p := Passive{}
 	p.cid = cid
 	p.listenAt = now
@@ -79,10 +80,20 @@ func NewPassive(passiveListen *net.TCPListener, cid string, now int64) *Passive 
 
 func (p *Paradise) HandlePassive() {
 	laddr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
-	passiveListen, err := net.ListenTCP("tcp", laddr)
+	var passiveListen net.Listener
+	passiveListen, err = net.ListenTCP("tcp", laddr)
 	if err != nil {
 		p.writeMessage(550, "Error with passive: "+err.Error())
 		return
+	}
+
+	if p.tls {
+		config := Load509Config()
+		if config == nil {
+			p.writeMessage(550, "Passive connection could not load 509 Key Pairs")
+			return
+		}
+		passiveListen = tls.NewListener(passiveListen, config)
 	}
 
 	cid := genClientID()

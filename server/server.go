@@ -32,6 +32,7 @@ type Paradise struct {
 	connectedAt   int64
 	passive       *Passive
 	userInfo      map[string]string
+	tls           bool
 }
 
 func init() {
@@ -56,6 +57,9 @@ func init() {
 	CommandMap["CWD"] = (*Paradise).HandleCwd
 	CommandMap["SIZE"] = (*Paradise).HandleSize
 	CommandMap["RETR"] = (*Paradise).HandleRetr
+	CommandMap["AUTH"] = (*Paradise).HandleAuth
+	CommandMap["PROT"] = (*Paradise).HandleProt
+	CommandMap["PBSZ"] = (*Paradise).HandlePbsz
 
 	ConnectionMap = make(map[string]*Paradise)
 }
