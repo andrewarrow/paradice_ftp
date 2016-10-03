@@ -42,8 +42,6 @@ func (p *Paradise) closePassive(passive *Passive) {
 		passive.closeFailedAt = time.Now().Unix()
 	} else {
 		passive.closeSuccessAt = time.Now().Unix()
-		delete(p.passives, passive.cid)
-		PassiveCount--
 	}
 }
 
@@ -62,7 +60,6 @@ func getThatPassiveConnection(passiveListen *net.TCPListener, p *Passive) {
 }
 
 func NewPassive(passiveListen *net.TCPListener, cid string, now int64) *Passive {
-	PassiveCount++
 	p := Passive{}
 	p.cid = cid
 	p.listenAt = now
@@ -80,10 +77,6 @@ func NewPassive(passiveListen *net.TCPListener, cid string, now int64) *Passive 
 	return &p
 }
 
-func anotherPassiveIsAvail() bool {
-	return false
-}
-
 func (p *Paradise) HandlePassive() {
 	laddr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 	passiveListen, err := net.ListenTCP("tcp", laddr)
@@ -91,17 +84,12 @@ func (p *Paradise) HandlePassive() {
 		p.writeMessage(550, "Error with passive: "+err.Error())
 		return
 	}
-	if anotherPassiveIsAvail() {
-		p.writeMessage(550, "Use other passive connection first.")
-		return
-	}
 
 	cid := genClientID()
 	passive := NewPassive(passiveListen, cid, time.Now().Unix())
 	passive.command = p.command
 	passive.param = p.param
-	p.lastPassCid = cid
-	p.passives[cid] = passive
+	p.passive = passive
 
 	if p.command == "PASV" {
 		p1 := passive.port / 256

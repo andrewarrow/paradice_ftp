@@ -11,7 +11,6 @@ import "github.com/andrewarrow/paradise_ftp/paradise"
 
 var CommandMap map[string]func(*Paradise)
 var ConnectionMap map[string]*Paradise
-var PassiveCount int
 var UpSince int64
 var FileManager *paradise.FileManager
 var AuthManager *paradise.AuthManager
@@ -31,8 +30,7 @@ type Paradise struct {
 	buffer        []byte
 	cid           string
 	connectedAt   int64
-	passives      map[string]*Passive
-	lastPassCid   string
+	passive       *Passive
 	userInfo      map[string]string
 }
 
@@ -72,20 +70,18 @@ func NewParadise(connection net.Conn, cid string, now int64) *Paradise {
 	p.ip = connection.RemoteAddr().String()
 	p.cid = cid
 	p.connectedAt = now
-	p.passives = make(map[string]*Passive)
 	p.userInfo = make(map[string]string)
 	p.userInfo["path"] = "/"
 	return &p
 }
 
 func (p *Paradise) lastPassive() *Passive {
-	passive := p.passives[p.lastPassCid]
-	if passive == nil {
+	if p.passive == nil {
 		return nil
 	}
-	passive.command = p.command
-	passive.param = p.param
-	return passive
+	p.passive.command = p.command
+	p.passive.param = p.param
+	return p.passive
 }
 
 func (p *Paradise) HandleCommands() {
