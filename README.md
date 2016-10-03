@@ -13,8 +13,7 @@ FYI FTP is a big protocol and I only implemented the stuff I needed. Stuff that'
  * uploads large files without reading entire file into memory
  * uploads read first 512 bytes of file first into bufffer to check mime type
  * graceful restarts by sending kill -USR2 pid
- 
- There is a good fork herre https://github.com/fclairamb/ftpserver with even more stuff!
+ * There is a good fork here https://github.com/fclairamb/ftpserver with even more stuff!
 
 Sample Run:
 
