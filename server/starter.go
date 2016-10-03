@@ -12,7 +12,6 @@ import "github.com/andrewarrow/paradise_ftp/paradise"
 var Settings ParadiseSettings
 var Listener net.Listener
 var err error
-var FinishAndStop bool
 
 func genClientID() string {
 	random, _ := os.Open("/dev/urandom")
@@ -30,7 +29,7 @@ func signalHandler() {
 		switch sig {
 		case syscall.SIGTERM:
 			signal.Stop(ch)
-			FinishAndStop = true
+			stopAcceptingNewConnections()
 			return
 		case syscall.SIGUSR2:
 			file, _ := Listener.(*net.TCPListener).File()
@@ -47,9 +46,12 @@ func signalHandler() {
 	}
 }
 
+func stopAcceptingNewConnections() {
+	Listener.Close()
+}
+
 func Start(fm *paradise.FileManager, am *paradise.AuthManager, gracefulChild bool) {
 	Settings = ReadSettings()
-	FinishAndStop = false
 	fmt.Println("starting...")
 	FileManager = fm
 	AuthManager = am
@@ -76,21 +78,16 @@ func Start(fm *paradise.FileManager, am *paradise.AuthManager, gracefulChild boo
 	go signalHandler()
 
 	for {
-		if FinishAndStop {
-			break
-		}
-		Listener.(*net.TCPListener).SetDeadline(time.Now().Add(60 * time.Second))
 		connection, err := Listener.Accept()
 		if err != nil {
-			if opError, ok := err.(*net.OpError); !ok || !opError.Timeout() {
-				fmt.Println("listening error ", err)
-			}
+			fmt.Println("listening error ", err)
+			break
 		} else {
-		  cid := genClientID()
-		  p := NewParadise(connection, cid, time.Now().Unix())
-		  ConnectionMap[cid] = p
+			cid := genClientID()
+			p := NewParadise(connection, cid, time.Now().Unix())
+			ConnectionMap[cid] = p
 
-		  go p.HandleCommands()
+			go p.HandleCommands()
 		}
 	}
 
