@@ -7,6 +7,7 @@ import "strconv"
 import "strings"
 import "time"
 import "crypto/tls"
+import "math/rand"
 
 func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	c := make(chan struct{})
@@ -79,7 +80,8 @@ func NewPassive(passiveListen net.Listener, cid string, now int64) *Passive {
 }
 
 func (p *Paradise) HandlePassive() {
-	laddr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
+	port := 50000 + rand.Intn(51009-50000)
+	laddr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:"+fmt.Sprintf("%d", port))
 	var passiveListen net.Listener
 	passiveListen, err = net.ListenTCP("tcp", laddr)
 	if err != nil {

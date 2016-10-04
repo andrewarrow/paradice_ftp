@@ -8,6 +8,7 @@ import "os"
 import "os/signal"
 import "os/exec"
 import "github.com/andrewarrow/paradise_ftp/paradise"
+import "math/rand"
 
 var Settings ParadiseSettings
 var Listener net.Listener
@@ -51,6 +52,7 @@ func stopAcceptingNewConnections() {
 }
 
 func Start(fm *paradise.FileManager, am *paradise.AuthManager, gracefulChild bool) {
+	rand.Seed(time.Now().UTC().UnixNano())
 	Settings = ReadSettings()
 	fmt.Println("starting...")
 	FileManager = fm
